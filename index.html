@@ -60,8 +60,8 @@
 
     <script type="text/javascript">
 
-      var audioContext = new webkitAudioContext();
-      var musicGainNode = audioContext.createGainNode();
+      var audioContext = new AudioContext();
+      var musicGainNode = audioContext.createGain();
       var musicSource = audioContext.createBufferSource();
 
       var gl;
