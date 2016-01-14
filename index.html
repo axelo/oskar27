@@ -16,7 +16,8 @@
       body {
         background-color: #191919;
         font-size: 12px;
-        
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
       }
 
       h1, h2 {
@@ -82,7 +83,7 @@
     <script>
       var audioContext = new webkitAudioContext();
       var musicGainNode = audioContext.createGain();
-      var musicSource = audioContext.createBufferSource();
+      var musicSourceBuffer = undefined;
 
       var gl;
 
@@ -106,8 +107,6 @@
       var isMusicLoaded = false;
       var isTextureLoaded = false;
 
-      var isMusicPlayed = false;
-
       function createCanvas() {
         var canvas = document.createElement("canvas");
         var canvasSize = 320;
@@ -119,7 +118,7 @@
         canvas.style.display = "block";
 
         canvas.onclick = function() {
-          if (isMusicLoaded) playMusic();
+          playMusic();
         }
 
         return canvas;
@@ -351,8 +350,8 @@
         
         xhr.onload = function(e) {
           audioContext.decodeAudioData(xhr.response, function(buffer) {
-            musicSource.buffer = buffer;
-            //playMusic();
+            musicSourceBuffer = buffer;
+            playMusic();
 
             isMusicLoaded = true;
             tryStart();
@@ -428,13 +427,12 @@
       }
 
       function playMusic() {
-        if (isMusicPlayed) return;
+        var musicSource = audioContext.createBufferSource();
+        musicSource.buffer = musicSourceBuffer;
 
         musicSource.loop = true;
         musicSource.connect(musicGainNode);
         musicSource.start(0);
-
-        isMusicPlayed = true;
       }
 
       function tryStart() {
