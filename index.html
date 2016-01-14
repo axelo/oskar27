@@ -3,16 +3,24 @@
     <meta charset="utf-8"> 
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>oskar27</title>
-    <script type="text/javascript" src="lib/glMatrix-0.9.5.min.js"></script>
+    <script src="lib/glMatrix-0.9.5.min.js"></script>
 
-    <style type="text/css">
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+      }
+
       body {
         background-color: #191919;
-        text-align: center;
+        font-size: 12px;
+        
       }
 
       h1, h2 {
-        margin-top: 0.2em;
+        margin: 0;
         font-size: 4em;
         color: white;
         font-family: Arial;
@@ -24,12 +32,24 @@
 
       #container {
         opacity: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        flex-direction: column;
       }
 
       .yeah {
         opacity: 1.0 !important;
-        -webkit-transition: opacity 5s ease-in;
+        -webkit-transition: opacity 3s ease-in;
       }
+
+      .old-age {
+        text-decoration: line-through;
+      }
+
     </style>
 
     <script id="shader-vs" type="x-shader/x-vertex">
@@ -59,9 +79,8 @@
       }
     </script>
 
-    <script type="text/javascript">
-
-      var audioContext = new AudioContext();
+    <script>
+      var audioContext = new webkitAudioContext();
       var musicGainNode = audioContext.createGain();
       var musicSource = audioContext.createBufferSource();
 
@@ -74,7 +93,7 @@
 
       var shaderProgram;
 
-      var cubeVertexPosBuffer;      
+      var cubeVertexPosBuffer;
       var cubeVertexIndexBuffer;
       var cubeVertexTextureCoordBuffer;
       var cubeTexture;
@@ -87,8 +106,28 @@
       var isMusicLoaded = false;
       var isTextureLoaded = false;
 
+      var isMusicPlayed = false;
+
+      function createCanvas() {
+        var canvas = document.createElement("canvas");
+        var canvasSize = 320;
+
+        canvas.width = canvasSize;
+        canvas.height = canvasSize
+        canvas.style.width = canvasSize + "px";
+        canvas.style.height = canvasSize + "px";
+        canvas.style.display = "block";
+
+        canvas.onclick = function() {
+          if (isMusicLoaded) playMusic();
+        }
+
+        return canvas;
+      }
+
       function webGLStart() {
-        var canvas = document.getElementById("canvas");
+        var canvas = createCanvas();
+        document.getElementById("canvas-container").appendChild(canvas);
 
         initWebGL(canvas);
         initShaders();
@@ -313,7 +352,7 @@
         xhr.onload = function(e) {
           audioContext.decodeAudioData(xhr.response, function(buffer) {
             musicSource.buffer = buffer;
-            playMusic();
+            //playMusic();
 
             isMusicLoaded = true;
             tryStart();
@@ -326,7 +365,7 @@
       function mvPushMatrix() {
         var copy = mat4.create();
         mat4.set(mvMatrix, copy);
-        mvMatrixStack.push(copy);      
+        mvMatrixStack.push(copy);
       }
 
       function mvPopMatrix() {
@@ -389,9 +428,13 @@
       }
 
       function playMusic() {
+        if (isMusicPlayed) return;
+
         musicSource.loop = true;
         musicSource.connect(musicGainNode);
         musicSource.start(0);
+
+        isMusicPlayed = true;
       }
 
       function tryStart() {
@@ -415,8 +458,9 @@
   <body onload="webGLStart()">
     <div id="container">
       <h1>GRATTIS OSKAR!</h1>
-      <canvas id="canvas" width="500" height="500"></canvas>
-      <h2>27 ÅR, VEM HADE TROTT DET</h2>
+      <div id="canvas-container"></div>
+      <h2><span class="old-age">27</span> 30 ÅR<h2>
+      <h2>VEM HADE TROTT DET</h2>
     </div>
   </body>
 </html>
