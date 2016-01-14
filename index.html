@@ -390,7 +390,7 @@
       function playMusic() {
         musicSource.loop = true;
         musicSource.connect(musicGainNode);
-        musicSource.noteOn(0);
+        musicSource.start(0);
       }
 
       function tryStart() {
@@ -401,7 +401,7 @@
       }
 
       function tick() {
-        webkitRequestAnimationFrame(tick);
+        requestAnimationFrame(tick);
 
         drawScene();
         
