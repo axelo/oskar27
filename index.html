@@ -379,6 +379,13 @@
         xhr.send();
       }
 
+      function initUserInteraction() {
+        if (!gotUserInteraction) {
+          gotUserInteraction = true;
+          tryStart();
+        }
+      }
+
       function mvPushMatrix() {
         var copy = mat4.create();
         mat4.set(mvMatrix, copy);
@@ -467,7 +474,7 @@
     </script>
 
   </head>
-  <body onload="main()" onclick="gotUserInteraction = true; tryStart();">
+  <body onload="main()" onclick="initUserInteraction();">
     <h1 id="wait-for-user-gesture">KLICKA</h1>
     <div id="container">
       <h1>GRATTIS OSKAR!</h1>
