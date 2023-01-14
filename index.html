@@ -1,6 +1,7 @@
-<html>
+<!DOCTYPE html>
+<html lang="sv">
   <head>
-    <meta charset="utf-8"> 
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>oskar27</title>
     <script src="lib/glMatrix-0.9.5.min.js"></script>
@@ -17,7 +18,7 @@
         background-color: #191919;
         font-size: 12px;
         -webkit-touch-callout: none;
-        -webkit-user-select: none;
+        user-select: none;
       }
 
       h1, h2 {
@@ -38,19 +39,32 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        text-align: center;
         flex-direction: column;
+      }
+
+      #wait-for-user-gesture {
+        opacity: 1;
+        width: 100%;
+        height: 100%;
+        position: fixed;
+        display: flex;
+        justify-content: center;
+        align-items: center;
       }
 
       .yeah {
         opacity: 1.0 !important;
-        -webkit-transition: opacity 3s ease-in;
+        transition: opacity 3s ease-in;
+      }
+
+      .yeah-inverse {
+        opacity: 0.0 !important;
+        transition: opacity 1s ease-out;
       }
 
       .old-age {
         text-decoration: line-through;
       }
-
     </style>
 
     <script id="shader-vs" type="x-shader/x-vertex">
@@ -81,8 +95,6 @@
     </script>
 
     <script>
-      var audioContext = new webkitAudioContext();
-      var musicGainNode = audioContext.createGain();
       var musicSourceBuffer = undefined;
 
       var gl;
@@ -106,6 +118,7 @@
       var lastTime = 0;
       var isMusicLoaded = false;
       var isTextureLoaded = false;
+      var gotUserInteraction = false;
 
       function createCanvas() {
         var canvas = document.createElement("canvas");
@@ -117,14 +130,10 @@
         canvas.style.height = canvasSize + "px";
         canvas.style.display = "block";
 
-        canvas.onclick = function() {
-          playMusic();
-        }
-
         return canvas;
       }
 
-      function webGLStart() {
+      function main() {
         var canvas = createCanvas();
         document.getElementById("canvas-container").appendChild(canvas);
 
@@ -132,7 +141,7 @@
         initShaders();
         initBuffers();
         initTexture();
-        initMusic();
+        loadMusic();
 
         gl.clearColor(0.1, 0.1, 0.1, 1.0); // black
         gl.enable(gl.DEPTH_TEST);
@@ -148,7 +157,7 @@
       function initShaders() {
         var vertexShader = getShader(gl, "shader-vs");
         var fragmentShader = getShader(gl, "shader-fs");
-      
+
         shaderProgram = gl.createProgram();
 
         gl.attachShader(shaderProgram, vertexShader);
@@ -170,10 +179,10 @@
       function getShader(gl, id) {
         var shaderScript = document.getElementById(id);
           if (!shaderScript) return null;
-        
+
           var str = "";
           var k = shaderScript.firstChild;
-          
+
           while (k) {
               if (k.nodeType == 3) str += k.textContent;
               k = k.nextSibling;
@@ -245,7 +254,7 @@
 
         gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPosBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-      
+
         // cube element buffer
         cubeVertexIndexBuffer = gl.createBuffer();
         cubeVertexIndexBuffer.itemSize = 1;
@@ -340,22 +349,31 @@
       }
 
       function initMusic() {
+        var audioContext = new AudioContext();
+        var musicGainNode = audioContext.createGain();
         musicGainNode.connect(audioContext.destination);
         musicGainNode.gain.value = 1.0;
 
+        audioContext.decodeAudioData(musicSourceBuffer, function(buffer) {
+          var musicSource = audioContext.createBufferSource();
+          musicSource.buffer = buffer;
+
+          musicSource.loop = true;
+          musicSource.connect(musicGainNode);
+          musicSource.start(0);
+          });
+      }
+
+      function loadMusic() {
         var xhr = new XMLHttpRequest();
 
         xhr.open("GET", "music/grattis.mp3", true);
         xhr.responseType = "arraybuffer";
-        
-        xhr.onload = function(e) {
-          audioContext.decodeAudioData(xhr.response, function(buffer) {
-            musicSourceBuffer = buffer;
-            playMusic();
 
-            isMusicLoaded = true;
-            tryStart();
-          });
+        xhr.onload = function(e) {
+          musicSourceBuffer = xhr.response;
+          isMusicLoaded = true;
+          tryStart();
         };
 
         xhr.send();
@@ -426,18 +444,14 @@
         lastTime = timeNow;
       }
 
-      function playMusic() {
-        var musicSource = audioContext.createBufferSource();
-        musicSource.buffer = musicSourceBuffer;
-
-        musicSource.loop = true;
-        musicSource.connect(musicGainNode);
-        musicSource.start(0);
-      }
-
       function tryStart() {
-        if (isTextureLoaded && isMusicLoaded) {
+        console.log("tryStart", "isTextureLoaded",isTextureLoaded,"isMusicLoaded",isMusicLoaded,"gotUserInteraction",gotUserInteraction);
+
+        if (isTextureLoaded && isMusicLoaded && gotUserInteraction) {
           document.getElementById("container").className += "yeah";
+          document.getElementById("wait-for-user-gesture").className += "yeah-inverse";
+
+          initMusic();
           tick();
         }
       }
@@ -446,18 +460,19 @@
         requestAnimationFrame(tick);
 
         drawScene();
-        
-        animate(); 
+
+        animate();
       }
 
     </script>
 
   </head>
-  <body onload="webGLStart()">
+  <body onload="main()" onclick="gotUserInteraction = true; tryStart();">
+    <h1 id="wait-for-user-gesture">KLICKA</h1>
     <div id="container">
       <h1>GRATTIS OSKAR!</h1>
       <div id="canvas-container"></div>
-      <h2><span class="old-age">27</span> 30 ÅR<h2>
+      <h2><span class="old-age">27</span> <span class="old-age">30</span> 37 ÅR<h2>
       <h2>VEM HADE TROTT DET</h2>
     </div>
   </body>
